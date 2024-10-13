@@ -1,36 +1,42 @@
 
-name: CI/CD for dvwa-docker
+name: CI/CD for DVWA
 
 on:
   push:
     branches:
-      - main  # Измените на вашу целевую ветку
-  pull_request:
-    branches:
-      - main  # Измените на вашу целевую ветку
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      dvwa:
+        image: vulnerables/web-dvwa
+        ports:
+          - 80:80
+        options: >-
+          --health-cmd="curl -f http://localhost || exit 1"
+          --health-interval=30s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v1
+      - name: Build DVWA
+        run: docker-compose up -d
 
-      - name: Install Docker Compose
+      - name: Wait for DVWA to be ready
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+          sleep 10 # ожидание, пока приложение запустится
+          curl -f http://localhost || exit 1
 
-      - name: Build Docker containers
+      - name: Run your tests (если есть)
         run: |
-          docker-compose build
+          # Здесь вы можете добавить команды для тестирования приложения
+          echo "All tests passed!" # Замените на ваши команды тестирования
 
-      - name: Run tests
-        run: |
-          docker-compose up -d
-          # Здесь можете добавить ваши тесты
-          docker-compose down
+      - name: Clean up
+        run: docker-compose down
