@@ -1,49 +1,36 @@
 
-name: CI for DVWA Docker
+name: CI/CD for dvwa-docker
 
 on:
   push:
     branches:
-      - main
+      - main  # Измените на вашу целевую ветку
   pull_request:
     branches:
-      - main
+      - main  # Измените на вашу целевую ветку
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      db:
-        image: mariadb:10
-        env:
-          MYSQL_ROOT_PASSWORD: dvwa
-          MYSQL_DATABASE: dvwa
-          MYSQL_USER: dvwa
-          MYSQL_PASSWORD: p@ssw0rd
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -h localhost"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Check out the code
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
+      - name: Set up Docker
         uses: docker/setup-buildx-action@v1
 
-      - name: Build and run DVWA
+      - name: Install Docker Compose
         run: |
-          docker-compose up -d
-          docker ps
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Build Docker containers
+        run: |
+          docker-compose build
 
       - name: Run tests
         run: |
-          echo "Тесты не заданы для DVWA"
-
-      - name: Stop Docker containers
-        run: docker-compose down
+          docker-compose up -d
+          # Здесь можете добавить ваши тесты
+          docker-compose down
